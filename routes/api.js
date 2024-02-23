@@ -18,17 +18,20 @@ router.get("/script", async (req, res) => {
       { role: "system", content: "You are a helpful assistant." },
       {
         role: "user",
-        content: `Give a 100 word youtube video script on the following topic: ${topic}.`,
+        content: `Generate a 100 word youtube video scripts on the following topic: ${topic}. Please reply in a proper JSON format. Make sure the json is like this: {title: "", content: ""}`,
       },
     ],
     model: "gpt-3.5-turbo",
   });
 
-  console.log(completion);
+  let gpt_msg = {}
+  try {
+    gpt_msg = JSON.parse(completion.choices[0].message.content)
+  } catch (e) {
+    return res.status(500).json({error: "Invalid GPT response"})
+  }
 
-  return res.json({
-    scripts: ["lor"],
-  });
+  return res.json(gpt_msg);
 });
 
 module.exports = router;
