@@ -129,4 +129,5 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-speech.mp3
+# speech.mp3
+tts/
