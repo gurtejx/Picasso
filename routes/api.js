@@ -29,77 +29,46 @@ router.get("/script", async (req, res) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept"
   );
-  console.log("was called");
+  console.log("/script was called");
   const topic = req.query.topic;
   if (!topic) {
     return res.status(400).json({ error: "No topic provided" });
   }
 
-  // const completion = await open.chat.completions.create({
-  //   messages: [
-  //     { role: "system", content: "You are a helpful assistant." },
-  //     {
-  //       role: "user",
-  //       content: `Generate a 100 word youtube video scripts on the following topic: ${topic}. Split it into sentences
-  //       and give one image/video keyword related to the sentence.
-  //       Remember this is for a vertical short form video. Always have a good intro
-  //       and make sure it flows well. Please reply in a proper JSON format.
-  //       ONLY GIVE PARSEABLE JSON, NOTHING ELSE, NO CODE BLOCKS EVEN
-  //       Make sure the json is like this: {title: "", content: [
-  //         {
-  //           sentence: "...",
-  //           image_search_keyword: "..."
-  //         },
-  //         {
-  //           sentence: "...",
-  //           image_search_keyword: "..."
-  //         }
-  //        ]}`,
-  //     },
-  //   ],
-  //   model: "gpt-3.5-turbo",
-  // });
-
-  // let gpt_msg = {};
-  // try {
-  //   console.log(completion.choices[0].message.content);
-  //   gpt_msg = JSON.parse(completion.choices[0].message.content);
-  // } catch (e) {
-  //   return res.status(500).json({ error: "Invalid GPT response" });
-  // }
-
-  res.json({
-    title: "Exploring Vancouver: Top Places to Visit",
-    content: [
+  const completion = await open.chat.completions.create({
+    messages: [
+      { role: "system", content: "You are a helpful assistant." },
       {
-        sentence:
-          "Welcome to Vancouver, a vibrant city in British Columbia, Canada.",
-        image_search_keyword: "Vancouver skyline",
-      },
-      {
-        sentence:
-          "Start your journey by visiting Stanley Park, a lush urban oasis with stunning views.",
-        image_search_keyword: "Stanley Park Vancouver",
-      },
-      {
-        sentence:
-          "Next, head to Granville Island Public Market, a bustling hub of art, food, and culture.",
-        image_search_keyword: "Granville Island Public Market",
-      },
-      {
-        sentence:
-          "Don't miss out on exploring Gastown, known for its historic charm and stylish boutiques.",
-        image_search_keyword: "Gastown Vancouver",
-      },
-      {
-        sentence:
-          "Cap off your day by strolling through the picturesque VanDusen Botanical Garden.",
-        image_search_keyword: "VanDusen Botanical Garden",
+        role: "user",
+        content: `Generate a 100 word youtube video scripts on the following topic: ${topic}. Split it into sentences
+        and give one image/video keyword related to the sentence.
+        Remember this is for a vertical short form video. Always have a good intro
+        and make sure it flows well. Please reply in a proper JSON format.
+        ONLY GIVE PARSEABLE JSON, NOTHING ELSE, NO CODE BLOCKS EVEN
+        Make sure the json is like this: {title: "", content: [
+          {
+            sentence: "...",
+            image_search_keyword: "..."
+          },
+          {
+            sentence: "...",
+            image_search_keyword: "..."
+          }
+         ]}`,
       },
     ],
+    model: "gpt-3.5-turbo",
   });
 
-  // return res.json(gpt_msg);
+  let gpt_msg = {};
+  try {
+    gpt_msg = JSON.parse(completion.choices[0].message.content);
+    console.log(gpt_msg)
+  } catch (e) {
+    return res.status(500).json({ error: "Invalid GPT response" });
+  }
+
+  return res.json(gpt_msg);
 });
 
 const speechFile = path.resolve("./speech.mp3");
@@ -111,16 +80,18 @@ router.post("/speak", async (req, res) => {
     "Origin, X-Requested-With, Content-Type, Accept"
   );
   console.log("was called");
+  console.log(req.body)
   const text = req.body.text;
+  // console.log(text)
 
-  // const mp3 = await open.audio.speech.create({
-  //   model: "tts-1",
-  //   voice: "alloy",
-  //   input: text,
-  // });
+  const mp3 = await open.audio.speech.create({
+    model: "tts-1",
+    voice: "alloy",
+    input: text,
+  });
 
-  // const buffer = Buffer.from(await mp3.arrayBuffer());
-  // await fs.promises.writeFile(speechFile, buffer);
+  const buffer = Buffer.from(await mp3.arrayBuffer());
+  await fs.promises.writeFile(speechFile, buffer);
 
   return res.sendFile(path.resolve("./speech.mp3"));
 });
