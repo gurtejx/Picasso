@@ -41,11 +41,11 @@ router.get("/script", async (req, res) => {
       { role: "system", content: "You are a helpful assistant." },
       {
         role: "user",
-        content: `Generate a 80 word youtube video scripts on the following topic: ${topic}. Split it into sentences
+        content: `Generate a 100 word tiktok video script on the following topic: ${topic}. Split it into sentences
         and give one image/video keyword related to the sentence.
         Remember this is for a vertical short form video. Always have a good intro
         and make sure it flows well. Please reply in a proper JSON format.
-        DO NOT EXCEED THE 80 word limit, but always have an intro.
+        Always have an intro (something like: here's how to do ... or today we're gonna be talking about ...), and make sure to have good transitions.
         ONLY GIVE PARSEABLE JSON, NOTHING ELSE, NO CODE BLOCKS EVEN
         Make sure the json is like this: {title: "", content: [
           {
