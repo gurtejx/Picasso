@@ -4,6 +4,7 @@ const OpenAI = require("openai");
 const path = require("path");
 const fs = require("fs");
 const pexels = require("pexels");
+const crypto = require('crypto');
 
 const router = express.Router();
 
@@ -40,10 +41,11 @@ router.get("/script", async (req, res) => {
       { role: "system", content: "You are a helpful assistant." },
       {
         role: "user",
-        content: `Generate a 100 word youtube video scripts on the following topic: ${topic}. Split it into sentences
+        content: `Generate a 80 word youtube video scripts on the following topic: ${topic}. Split it into sentences
         and give one image/video keyword related to the sentence.
         Remember this is for a vertical short form video. Always have a good intro
         and make sure it flows well. Please reply in a proper JSON format.
+        DO NOT EXCEED THE 80 word limit, but always have an intro.
         ONLY GIVE PARSEABLE JSON, NOTHING ELSE, NO CODE BLOCKS EVEN
         Make sure the json is like this: {title: "", content: [
           {
@@ -63,7 +65,7 @@ router.get("/script", async (req, res) => {
   let gpt_msg = {};
   try {
     gpt_msg = JSON.parse(completion.choices[0].message.content);
-    console.log(gpt_msg)
+    // console.log(gpt_msg)
   } catch (e) {
     return res.status(500).json({ error: "Invalid GPT response" });
   }
@@ -71,7 +73,6 @@ router.get("/script", async (req, res) => {
   return res.json(gpt_msg);
 });
 
-const speechFile = path.resolve("./speech.mp3");
 
 router.post("/speak", async (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -79,10 +80,9 @@ router.post("/speak", async (req, res) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept"
   );
-  console.log("was called");
-  console.log(req.body)
+  console.log("/speak was called");
   const text = req.body.text;
-  // console.log(text)
+  const hash = crypto.createHash("md5").update(text).digest('hex')
 
   const mp3 = await open.audio.speech.create({
     model: "tts-1",
@@ -90,10 +90,12 @@ router.post("/speak", async (req, res) => {
     input: text,
   });
 
+  const speechFile = path.resolve(`./${hash}.mp3`);
   const buffer = Buffer.from(await mp3.arrayBuffer());
   await fs.promises.writeFile(speechFile, buffer);
 
-  return res.sendFile(path.resolve("./speech.mp3"));
+  res.send(buffer);
+  fs.unlinkSync(speechFile)
 });
 
 router.post("/transcribe", tts_upload.single("tts"), async (req, res) => {
@@ -113,26 +115,19 @@ router.get("/stock_vid", async (req, res) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept"
   );
-  console.log('called')
+  console.log('/stock_vid called')
   const topic = req.query.topic;
 
   const vids = await client.videos.search({
     query: topic,
     per_page: 1,
     max_duration: 30,
-    min_width: 1920,
-    max_width: 1920,
+    min_width: 1080,
+    max_width: 1080,
   });
   const vid_files = vids.videos[0].video_files;
 
   res.json({ url: vid_files[vid_files.length - 1] });
 });
-
-const gen_upload_fields = gen_upload.fields([
-  { name: "tts", maxCount: 1 },
-  { name: "vids" },
-  { name: "music", maxCount: 1 },
-]);
-router.post("/generate", gen_upload_fields, async (req, res) => {});
 
 module.exports = router;
